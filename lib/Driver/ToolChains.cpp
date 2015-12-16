@@ -4120,6 +4120,17 @@ void Linux::AddCudaIncludeArgs(const ArgList &DriverArgs,
   }
 }
 
+void Linux::AddCudaLinkerArgs(const ArgList &DriverArgs,
+                              ArgStringList &LDArgs) const {
+  if (DriverArgs.hasArg(options::OPT_nocudalib) || !CudaInstallation.isValid())
+    return;
+
+  LDArgs.push_back("-L");
+  LDArgs.push_back(DriverArgs.MakeArgString(CudaInstallation.getLibPath()));
+  for (const char *Flag : {"-lcudart_static", "-ldl", "-lrt", "-lpthread"})
+    LDArgs.push_back(DriverArgs.MakeArgString(Flag));
+}
+
 bool Linux::isPIEDefault() const { return getSanitizerArgs().requiresPIE(); }
 
 SanitizerMask Linux::getSupportedSanitizers() const {

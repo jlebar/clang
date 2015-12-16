@@ -224,6 +224,13 @@ static void addDirectoryList(const ArgList &Args, ArgStringList &CmdArgs,
   }
 }
 
+// Is the given action, or any of its inputs, a CUDA action?
+static bool isCudaAction(const Action* A) {
+  return isa<CudaDeviceAction>(A) || isa<CudaHostAction>(A) ||
+         std::any_of(A->getInputs().begin(), A->getInputs().end(),
+                     isCudaAction);
+}
+
 static void AddLinkerInputs(const Compilation &C, const ToolChain &TC,
                             const InputInfoList &Inputs, const ArgList &Args,
                             ArgStringList &CmdArgs) {
@@ -265,6 +272,10 @@ static void AddLinkerInputs(const Compilation &C, const ToolChain &TC,
   //                and only supported on native toolchains.
   if (!TC.isCrossCompiling())
     addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
+
+  // Add -L/path/to/cuda/lib if any of our inputs are .cu files.
+  if (std::any_of(C.getActions().begin(), C.getActions().end(), isCudaAction))
+    TC.AddCudaLinkerArgs(Args, CmdArgs);
 }
 
 /// \brief Determine whether Objective-C automated reference counting is

@@ -665,4 +665,11 @@ SanitizerMask ToolChain::getSupportedSanitizers() const {
 }
 
 void ToolChain::AddCudaIncludeArgs(const ArgList &DriverArgs,
-                                   ArgStringList &CC1Args) const {}
+                                   ArgStringList &CC1Args) const {
+  // Only supported on Linux at the moment.
+}
+
+void ToolChain::AddCudaLinkerArgs(const ArgList &DriverArgs,
+                                  ArgStringList &LDArgs) const {
+  // Only supported on Linux at the moment.
+}

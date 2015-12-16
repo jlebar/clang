@@ -1632,6 +1632,8 @@ def no__dead__strip__inits__and__terms : Flag<["-"], "no_dead_strip_inits_and_te
 def nobuiltininc : Flag<["-"], "nobuiltininc">, Flags<[CC1Option]>,
   HelpText<"Disable builtin #include directories">;
 def nocudainc : Flag<["-"], "nocudainc">;
+def nocudalib : Flag<["-"], "nocudalib">,
+  HelpText<"Don't link with libraries necessary for running CUDA">;
 def nocudalibdevice : Flag<["-"], "nocudalibdevice">,
   HelpText<"Don't link in the CUDA libdevice bitcode (libdevice.compute_xx.yy.bc)">;
 def nodefaultlibs : Flag<["-"], "nodefaultlibs">;

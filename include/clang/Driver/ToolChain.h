@@ -408,6 +408,10 @@ public:
   virtual void AddCudaIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                                   llvm::opt::ArgStringList &CC1Args) const;
 
+  /// \brief Add LD arguments pointing to CUDA libraries.
+  virtual void AddCudaLinkerArgs(const llvm::opt::ArgList &DriverArgs,
+                                 llvm::opt::ArgStringList &LDArgs) const;
+
   /// \brief Return sanitizers which are available in this toolchain.
   virtual SanitizerMask getSupportedSanitizers() const;
 };
