@@ -34,9 +34,9 @@
 // RUN: %clang -### -v --target=i386-unknown-linux --cuda-gpu-arch=sm_30 \
 // RUN:   --cuda-path=%S/Inputs/CUDA/usr/local/cuda %s 2>&1 \
 // RUN:   | FileCheck %s -check-prefix COMMON -check-prefix NOLIBDEVICE
-// .. or if we explicitly passed -nocudalib
+// .. or if we explicitly passed -nocudalibdevice
 // RUN: %clang -### -v --target=i386-unknown-linux --cuda-gpu-arch=sm_35 \
-// RUN:   -nocudalib --cuda-path=%S/Inputs/CUDA/usr/local/cuda %s 2>&1 \
+// RUN:   -nocudalibdevice --cuda-path=%S/Inputs/CUDA/usr/local/cuda %s 2>&1 \
 // RUN:   | FileCheck %s -check-prefix COMMON -check-prefix NOLIBDEVICE
 // Verify that we don't add include paths, link with libdevice or
 // -include __clang_cuda_runtime_wrapper.h without valid CUDA installation.

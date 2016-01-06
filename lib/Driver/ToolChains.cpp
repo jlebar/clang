@@ -4200,7 +4200,7 @@ CudaToolChain::addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
   Linux::addClangTargetOptions(DriverArgs, CC1Args);
   CC1Args.push_back("-fcuda-is-device");
 
-  if (DriverArgs.hasArg(options::OPT_nocudalib))
+  if (DriverArgs.hasArg(options::OPT_nocudalibdevice))
     return;
 
   std::string LibDeviceFile = CudaInstallation.getLibDeviceFile(
