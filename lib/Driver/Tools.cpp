@@ -224,8 +224,9 @@ static void addDirectoryList(const ArgList &Args, ArgStringList &CmdArgs,
   }
 }
 
-static void AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
-                            const ArgList &Args, ArgStringList &CmdArgs) {
+static void AddLinkerInputs(const Compilation &C, const ToolChain &TC,
+                            const InputInfoList &Inputs, const ArgList &Args,
+                            ArgStringList &CmdArgs) {
   const Driver &D = TC.getDriver();
 
   // Add extra linker input arguments which are not treated as inputs
@@ -6409,7 +6410,7 @@ constructHexagonLinkArgs(Compilation &C, const JobAction &JA,
                   {options::OPT_T_Group, options::OPT_e, options::OPT_s,
                    options::OPT_t, options::OPT_u_Group});
 
-  AddLinkerInputs(HTC, Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, HTC, Inputs, Args, CmdArgs);
 
   //----------------------------------------------------------------------------
   // Libraries
@@ -6472,7 +6473,7 @@ void amdgpu::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("old-gnu");
   CmdArgs.push_back("-target");
   CmdArgs.push_back(Args.MakeArgString(getToolChain().getTripleString()));
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
   C.addCommand(llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Linker),
@@ -6500,7 +6501,7 @@ void wasm::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
   CmdArgs.push_back("-flavor");
   CmdArgs.push_back("ld");
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
   C.addCommand(llvm::make_unique<Command>(JA, *this, Linker, CmdArgs, Inputs));
@@ -6803,7 +6804,7 @@ void cloudabi::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (D.isUsingLTO())
     AddGoldPlugin(ToolChain, Args, CmdArgs, D.getLTOMode() == LTOK_Thin);
 
-  AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, ToolChain, Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX())
@@ -7173,7 +7174,7 @@ void darwin::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
   // Build the input file for -filelist (list of linker input files) in case we
   // need it later
   for (const auto &II : Inputs) {
@@ -7391,7 +7392,7 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, {options::OPT_L, options::OPT_T_Group,
                             options::OPT_e, options::OPT_r});
 
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
     if (getToolChain().getDriver().CCCIsCXX())
@@ -7564,7 +7565,7 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                             options::OPT_e, options::OPT_s, options::OPT_t,
                             options::OPT_Z_Flag, options::OPT_r});
 
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX()) {
@@ -7683,7 +7684,7 @@ void bitrig::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs,
                   {options::OPT_L, options::OPT_T_Group, options::OPT_e});
 
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX()) {
@@ -7949,7 +7950,7 @@ void freebsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     AddGoldPlugin(ToolChain, Args, CmdArgs, D.getLTOMode() == LTOK_Thin);
 
   bool NeedsSanitizerDeps = addSanitizerRuntimes(ToolChain, Args, CmdArgs);
-  AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, ToolChain, Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
     addOpenMPRuntime(CmdArgs, ToolChain, Args);
@@ -8245,7 +8246,7 @@ void netbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_Z_Flag);
   Args.AddAllArgs(CmdArgs, options::OPT_r);
 
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
 
   unsigned Major, Minor, Micro;
   getToolChain().getTriple().getOSVersion(Major, Minor, Micro);
@@ -8832,7 +8833,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--no-demangle");
 
   bool NeedsSanitizerDeps = addSanitizerRuntimes(ToolChain, Args, CmdArgs);
-  AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, ToolChain, Inputs, Args, CmdArgs);
   // The profile runtime also needs access to system libraries.
   getToolChain().addProfileRTLibs(Args, CmdArgs);
 
@@ -9026,7 +9027,7 @@ void nacltools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_Z_Xlinker__no_demangle))
     CmdArgs.push_back("--no-demangle");
 
-  AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, ToolChain, Inputs, Args, CmdArgs);
 
   if (D.CCCIsCXX() &&
       !Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
@@ -9138,7 +9139,7 @@ void minix::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs,
                   {options::OPT_L, options::OPT_T_Group, options::OPT_e});
 
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
 
   getToolChain().addProfileRTLibs(Args, CmdArgs);
 
@@ -9259,7 +9260,7 @@ void dragonfly::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs,
                   {options::OPT_L, options::OPT_T_Group, options::OPT_e});
 
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
     CmdArgs.push_back("-L/usr/lib/gcc50");
@@ -9762,7 +9763,7 @@ void MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   TC.AddFilePathLibArgs(Args, CmdArgs);
-  AddLinkerInputs(TC, Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, TC, Inputs, Args, CmdArgs);
 
   // TODO: Add ASan stuff here
 
@@ -9886,7 +9887,7 @@ void XCore::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                    false))
     CmdArgs.push_back("-fexceptions");
 
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("xcc"));
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
@@ -10040,7 +10041,7 @@ void CrossWindows::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   TC.AddFilePathLibArgs(Args, CmdArgs);
-  AddLinkerInputs(TC, Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, TC, Inputs, Args, CmdArgs);
 
   if (D.CCCIsCXX() && !Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
@@ -10218,7 +10219,7 @@ void tools::Myriad::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   TC.AddFilePathLibArgs(Args, CmdArgs);
 
-  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, getToolChain(), Inputs, Args, CmdArgs);
 
   if (UseDefaultLibs) {
     if (C.getDriver().CCCIsCXX())
@@ -10327,7 +10328,7 @@ static void ConstructPS4LinkJob(const Tool &T, Compilation &C,
   if (Args.hasArg(options::OPT_Z_Xlinker__no_demangle))
     CmdArgs.push_back("--no-demangle");
 
-  AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, ToolChain, Inputs, Args, CmdArgs);
 
   if (Args.hasArg(options::OPT_pthread)) {
     CmdArgs.push_back("-lpthread");
@@ -10423,7 +10424,7 @@ static void ConstructGoldLinkJob(const Tool &T, Compilation &C,
   if (Args.hasArg(options::OPT_Z_Xlinker__no_demangle))
     CmdArgs.push_back("--no-demangle");
 
-  AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
+  AddLinkerInputs(C, ToolChain, Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
     // For PS4, we always want to pass libm, libstdc++ and libkernel
