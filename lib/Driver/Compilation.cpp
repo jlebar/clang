@@ -188,14 +188,17 @@ static bool InputsOk(const Command &C,
   return !ActionFailed(&C.getSource(), FailingCommands);
 }
 
-void Compilation::ExecuteJobs(const JobList &Jobs,
+void Compilation::ExecuteJobs(const JobList &Jobs, bool StopOnFailure,
                               FailingCommandList &FailingCommands) const {
   for (const auto &Job : Jobs) {
     if (!InputsOk(Job, FailingCommands))
       continue;
     const Command *FailingCommand = nullptr;
-    if (int Res = ExecuteCommand(Job, FailingCommand))
+    if (int Res = ExecuteCommand(Job, FailingCommand)) {
       FailingCommands.push_back(std::make_pair(Res, FailingCommand));
+      if (StopOnFailure)
+        return;
+    }
   }
 }
 

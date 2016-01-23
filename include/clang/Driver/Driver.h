@@ -192,6 +192,10 @@ private:
   /// Certain options suppress the 'no input files' warning.
   bool SuppressMissingInputWarning : 1;
 
+  /// Should we stop running all jobs as soon as one fails?  If false, we run as
+  /// much as we can.
+  bool StopOnJobFailure : 1;
+
   std::list<std::string> TempFiles;
   std::list<std::string> ResultFiles;
 

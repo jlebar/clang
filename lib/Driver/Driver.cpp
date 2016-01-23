@@ -58,7 +58,8 @@ Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
       CCPrintHeadersFilename(nullptr), CCLogDiagnosticsFilename(nullptr),
       CCCPrintBindings(false), CCPrintHeaders(false), CCLogDiagnostics(false),
       CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
-      CCCUsePCH(true), SuppressMissingInputWarning(false) {
+      CCCUsePCH(true), SuppressMissingInputWarning(false),
+      StopOnJobFailure(false) {
 
   // Provide a sane fallback if no VFS is specified.
   if (!this->VFS)
@@ -505,6 +506,16 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   InputList Inputs;
   BuildInputs(C->getDefaultToolChain(), *TranslatedArgs, Inputs);
 
+  // StopOnJobFailure defaults to false, except for CUDA compilations.
+  if (Arg *A = C->getArgs().getLastArg(options::OPT_stop_on_failure,
+                                       options::OPT_no_stop_on_failure))
+    StopOnJobFailure = A->getOption().matches(options::OPT_stop_on_failure);
+  else
+    StopOnJobFailure =
+        llvm::any_of(Inputs, [](const std::pair<types::ID, const Arg *> &I) {
+          return I.first == types::TY_CUDA;
+        });
+
   // Construct the list of abstract actions to perform for this compilation. On
   // MachO targets this uses the driver-driver and universal actions.
   if (TC.getTriple().isOSBinFormatMachO())
@@ -638,7 +649,9 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
 
   // Generate preprocessed output.
   SmallVector<std::pair<int, const Command *>, 4> FailingCommands;
-  C.ExecuteJobs(C.getJobs(), FailingCommands);
+  // Might as well pass StopOnFailure = true; if any of the commands fails, we
+  // don't output anything at all.
+  C.ExecuteJobs(C.getJobs(), /* StopOnFailure = */ true, FailingCommands);
 
   // If any of the preprocessing commands failed, clean up and exit.
   if (!FailingCommands.empty()) {
@@ -730,7 +743,7 @@ int Driver::ExecuteCompilation(
   for (auto &Job : C.getJobs())
     setUpResponseFiles(C, Job);
 
-  C.ExecuteJobs(C.getJobs(), FailingCommands);
+  C.ExecuteJobs(C.getJobs(), StopOnJobFailure, FailingCommands);
 
   // Remove temp files.
   C.CleanupFileList(C.getTempFiles());

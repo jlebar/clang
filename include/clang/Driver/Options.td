@@ -1799,6 +1799,11 @@ def : Flag<["-"], "integrated-as">, Alias<fintegrated_as>, Flags<[DriverOption]>
 def : Flag<["-"], "no-integrated-as">, Alias<fno_integrated_as>,
       Flags<[CC1Option, DriverOption]>;
 
+def stop_on_failure : Flag<["-"], "stop-on-failure">, Flags<[DriverOption]>,
+  HelpText<"Stop running jobs as soon as one fails.  This is the default during "
+    "CUDA compilation without --save-temps.">;
+def no_stop_on_failure : Flag<["-"], "no-stop-on-failure">, Flags<[DriverOption]>;
+
 def working_directory : JoinedOrSeparate<["-"], "working-directory">, Flags<[CC1Option]>,
   HelpText<"Resolve file paths relative to the specified directory">;
 def working_directory_EQ : Joined<["-"], "working-directory=">, Flags<[CC1Option]>,

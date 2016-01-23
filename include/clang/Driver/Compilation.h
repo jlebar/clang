@@ -193,12 +193,13 @@ public:
   /// \return The result code of the subprocess.
   int ExecuteCommand(const Command &C, const Command *&FailingCommand) const;
 
-  /// ExecuteJob - Execute a single job.
+  /// ExecuteJobs - Execute a list of jobs.
   ///
-  /// \param FailingCommands - For non-zero results, this will be a vector of
-  /// failing commands and their associated result code.
+  /// \param StopOnFailure - If true, execution stops as soon as one job fails.
+  /// \param FailingCommands - Outparam that's set to the list of Commands that
+  /// failed, plus their associated result codes.
   void ExecuteJobs(
-      const JobList &Jobs,
+      const JobList &Jobs, bool StopOnFailure,
       SmallVectorImpl<std::pair<int, const Command *>> &FailingCommands) const;
 
   /// initCompilationForDiagnostics - Remove stale state and suppress output
