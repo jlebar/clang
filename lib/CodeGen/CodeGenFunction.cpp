@@ -715,6 +715,16 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
       EmitOpenCLKernelMetadata(FD, Fn);
   }
 
+  if (getLangOpts().CUDAIsDevice) {
+    // Conservatively, mark all functions in CUDA as convergent (meaning, they
+    // may call an intrinsicly convergent op, such as __syncthreads(), and so
+    // can't have certain optimizations applied around them).  LLVM will remove
+    // this attribute where it safely can.
+    //
+    // TODO: Write a test.
+    Fn->addFnAttr(llvm::Attribute::Convergent);
+  }
+
   // If we are checking function types, emit a function type signature as
   // prologue data.
   if (getLangOpts().CPlusPlus && SanOpts.has(SanitizerKind::Function)) {
